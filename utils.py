@@ -14,9 +14,11 @@ class Syns:
         self.total_syns = []
 
     def get_syns(self, word):
+        # If already processed and we have a synonim, return it
         if word in self.total_syns:
             return self.inv_syns[word]
         w_syns = []
+        # Add to the data structure
         for synset in wordnet.synsets(word):
             for lem in synset.lemmas():
                 w_syns.append(lem.name())
@@ -38,20 +40,28 @@ def proc_text(text):
     total_syns = []
     syns = Syns()
     in_ne = False
+
+    # Iterate over the Stanza object
     for s in doc.sentences:
         sent = []
         named_ent = []
         for t in s.tokens:
+            # If he is in a named entity, set the flag and go for next token
             if t.ner != 'O':
                 in_ne = True 
                 named_ent.append(t.text)
                 continue
+            # Ended named entity
             elif t.ner == 'O' and in_ne:
                 in_ne = False
                 sent.append(" ".join(named_ent))
                 named_ent = []
+
+            # If it is a stopword or not alpha numeric, skip
             if t.text.lower() in stopwords_en or not t.text.isalpha():
                 continue
+
+            # Get the word out of the synonims
             w = syns.get_syns(t.words[0].lemma)
             sent.append(w)
         if len(named_ent) > 0:
